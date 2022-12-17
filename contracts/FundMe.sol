@@ -31,9 +31,12 @@ contract FundMe {
 
   address public immutable i_owner; // variable set only once but not on the same line as initialisation can be set as immutable
 
-  constructor() {
+  AggregatorV3Interface public priceFeed;
+
+  constructor(address priceFeedAddress) {
     // constructors are functions that get called immediately after deploying the contract
     i_owner = msg.sender; // sender of constructor is the address that deployed the contract
+    priceFeed = AggregatorV3Interface(priceFeedAddress);
   }
 
   function fund() public payable {
@@ -43,7 +46,7 @@ contract FundMe {
     // require(boolean, revert message)
     // Reverting undoes any previous action, send remaining gas back
     require(
-      msg.value.getConversionRate() >= MINIMUM_USD,
+      msg.value.getConversionRate(priceFeed) >= MINIMUM_USD,
       "Didn't send enough!"
     ); // 1e18 wei = 1ETH
     funders.push(msg.sender); // add funder address to funders list
