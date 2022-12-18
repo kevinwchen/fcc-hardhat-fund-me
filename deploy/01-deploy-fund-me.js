@@ -1,5 +1,7 @@
 const { networkConfig, developmentChains } = require("../helper-hardhat-config")
 const { network } = require("hardhat")
+const { verify } = require("../utils/verify")
+require("dotenv").config()
 
 module.exports = async ({ getNamedAccounts, deployments }) => {
   // similar to hre.getNamedAccounts and hre.deployments
@@ -20,14 +22,23 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     ethUsdPriceFeedAddress = networkConfig[chainId]["ethUsdPriceFeed"]
   }
 
-  // const ethUsdPriceFeedAddress = networkConfig[chainId]["ethUsdPriceFeed"]
+  const args = [ethUsdPriceFeedAddress]
 
   // when using localhost or hardhat network, use a mock
   const fundMe = await deploy("FundMe", {
     from: deployer,
-    args: [ethUsdPriceFeedAddress],
+    args: args,
     log: true,
   })
+
+  if (
+    !developmentChains.includes(network.name) &&
+    process.env.ETHERSCAN_API_KEY
+  ) {
+    // Verify only if not a development chain
+    await verify(fundMe.address, args)
+  }
+
   log("--------------------------------------------------")
 }
 
