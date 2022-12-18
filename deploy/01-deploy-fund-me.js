@@ -1,6 +1,9 @@
 const { networkConfig, developmentChains } = require("../helper-hardhat-config")
 const { network } = require("hardhat")
 const { verify } = require("../utils/verify")
+const {
+  HARDHAT_NETWORK_SUPPORTED_HARDFORKS,
+} = require("hardhat/internal/constants")
 require("dotenv").config()
 
 module.exports = async ({ getNamedAccounts, deployments }) => {
@@ -29,6 +32,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     from: deployer,
     args: args,
     log: true,
+    waitConfirmations: network.config.blockConfirmations || 1, // blocks to wait
   })
 
   if (
