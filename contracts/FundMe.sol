@@ -63,7 +63,7 @@ contract FundMe {
         // Reverting undoes any previous action, send remaining gas back
         require(
             msg.value.getConversionRate(priceFeed) >= MINIMUM_USD,
-            "Didn't send enough!"
+            "You need to send more ETH!"
         ); // 1e18 wei = 1ETH
         funders.push(msg.sender); // add funder address to funders list
         addressToAmountFunded[msg.sender] = msg.value; // add funder address to mapping to amount funded
