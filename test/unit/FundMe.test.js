@@ -27,7 +27,6 @@ describe("FundMe", async function () {
         })
     })
 
-    // yarn add --dev ethereum-waffle
     describe("fund", async function () {
         it("Fails if not enough ETH sent", async function () {
             await expect(fundMe.fund()).to.be.revertedWith(
@@ -43,6 +42,59 @@ describe("FundMe", async function () {
             await fundMe.fund({ value: sendValue })
             const funder = await fundMe.funders(0)
             assert.equal(funder, deployer)
+        })
+    })
+
+    describe("withdraw", async function () {
+        beforeEach(async function () {
+            await fundMe.fund({ value: sendValue })
+        })
+
+        it("Withdraws ETH from a single founder", async function () {
+            // Arrange
+            const startingFundMeBalance = await fundMe.provider.getBalance(
+                fundMe.address
+            )
+            const startingDeployerBalance = await fundMe.provider.getBalance(
+                deployer
+            )
+            console.log(
+                `Starting fundMe balance: ${ethers.utils.formatEther(
+                    startingFundMeBalance
+                )} ETH`
+            )
+            console.log(
+                `Starting deployer balance: ${ethers.utils.formatEther(
+                    startingDeployerBalance
+                )} ETH`
+            )
+            // Act
+            const transactionResponse = await fundMe.withdraw()
+            const transactionReceipt = await transactionResponse.wait(1)
+            const { gasUsed, effectiveGasPrice } = transactionReceipt
+            const gasCost = gasUsed.mul(effectiveGasPrice)
+            const endingFundMeBalance = await fundMe.provider.getBalance(
+                fundMe.address
+            )
+            const endingDeployerBalance = await fundMe.provider.getBalance(
+                deployer
+            )
+            console.log(
+                `Final fundMe balance: ${ethers.utils.formatEther(
+                    endingFundMeBalance
+                )} ETH`
+            )
+            console.log(
+                `Final deployer balance: ${ethers.utils.formatEther(
+                    endingDeployerBalance
+                )} ETH`
+            )
+            // Assert
+            assert.equal(endingFundMeBalance, 0)
+            assert.equal(
+                startingFundMeBalance.add(startingDeployerBalance),
+                endingDeployerBalance.add(gasCost).toString()
+            )
         })
     })
 })

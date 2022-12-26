@@ -2,6 +2,7 @@
 
 // Pragma Statements
 pragma solidity ^0.8.8;
+import "hardhat/console.sol";
 
 // Import Statements
 import "./PriceConverter.sol";
