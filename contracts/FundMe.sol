@@ -24,10 +24,10 @@ contract FundMe {
 
     // State Variables
     uint256 public constant MINIMUM_USD = 50 * 1e18;
-    address[] public funders;
-    mapping(address => uint256) public addressToAmountFunded;
+    address[] public s_funders;
+    mapping(address => uint256) public s_addressToAmountFunded;
     address public immutable i_owner; // variable set only once but not on the same line as initialisation can be set as immutable
-    AggregatorV3Interface public priceFeed;
+    AggregatorV3Interface public s_priceFeed;
 
     // Modifiers
     modifier onlyOwner() {
@@ -41,7 +41,7 @@ contract FundMe {
     constructor(address priceFeedAddress) {
         // constructors are functions that get called immediately after deploying the contract
         i_owner = msg.sender; // sender of constructor is the address that deployed the contract
-        priceFeed = AggregatorV3Interface(priceFeedAddress);
+        s_priceFeed = AggregatorV3Interface(priceFeedAddress);
     }
 
     // receive() external payable {
@@ -63,25 +63,43 @@ contract FundMe {
         // require(boolean, revert message)
         // Reverting undoes any previous action, send remaining gas back
         require(
-            msg.value.getConversionRate(priceFeed) >= MINIMUM_USD,
+            msg.value.getConversionRate(s_priceFeed) >= MINIMUM_USD,
             "You need to send more ETH!"
         ); // 1e18 wei = 1ETH
-        funders.push(msg.sender); // add funder address to funders list
-        addressToAmountFunded[msg.sender] = msg.value; // add funder address to mapping to amount funded
+        s_funders.push(msg.sender); // add funder address to funders list
+        s_addressToAmountFunded[msg.sender] = msg.value; // add funder address to mapping to amount funded
     }
 
-    function withdraw() public onlyOwner {
+    function withdraw() public payable onlyOwner {
+        for (
+            uint256 funderIndex = 0;
+            funderIndex < s_funders.length;
+            funderIndex++
+        ) {
+            address funder = s_funders[funderIndex]; // get address for each funder on the list
+            s_addressToAmountFunded[funder] = 0; // reset amount funded to zero
+        }
+
+        // Reset the array
+        s_funders = new address[](0); // (0) means 0 objects upon declaration
+        (bool callSuccess, ) = payable(msg.sender).call{
+            value: address(this).balance
+        }("");
+        require(callSuccess, "Call failed");
+    }
+
+    function cheaperWithdraw() public payable onlyOwner {
+        address[] memory funders = s_funders; // Save into memory to save gas
+        // Mappings can't be saved into memory
         for (
             uint256 funderIndex = 0;
             funderIndex < funders.length;
             funderIndex++
         ) {
-            address funder = funders[funderIndex]; // get address for each funder on the list
-            addressToAmountFunded[funder] = 0; // reset amount funded to zero
+            address funder = funders[funderIndex];
+            s_addressToAmountFunded[funder] = 0;
         }
-
-        // Reset the array
-        funders = new address[](0); // (0) means 0 objects upon declaration
+        s_funders = new address[](0); // (0) means 0 objects upon declaration
         (bool callSuccess, ) = payable(msg.sender).call{
             value: address(this).balance
         }("");
