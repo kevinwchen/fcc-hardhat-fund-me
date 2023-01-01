@@ -26,7 +26,7 @@ contract FundMe {
     uint256 public constant MINIMUM_USD = 50 * 1e18;
     address[] public s_funders;
     mapping(address => uint256) public s_addressToAmountFunded;
-    address public immutable i_owner; // variable set only once but not on the same line as initialisation can be set as immutable
+    address private immutable i_owner; // variable set only once but not on the same line as initialisation can be set as immutable
     AggregatorV3Interface public s_priceFeed;
 
     // Modifiers
@@ -62,6 +62,7 @@ contract FundMe {
 
         // require(boolean, revert message)
         // Reverting undoes any previous action, send remaining gas back
+        // Can update requires into reverts to save gas due to string storage
         require(
             msg.value.getConversionRate(s_priceFeed) >= MINIMUM_USD,
             "You need to send more ETH!"
@@ -104,5 +105,26 @@ contract FundMe {
             value: address(this).balance
         }("");
         require(callSuccess, "Call failed");
+    }
+
+    // View/Pure Functions
+    // getter functions so the underscore prefixes are contained here
+
+    function getOwner() public view returns (address) {
+        return i_owner;
+    }
+
+    function getFunder(uint256 index) public view returns (address) {
+        return s_funders[index];
+    }
+
+    function getAddressToAmountFunded(
+        address funder
+    ) public view returns (uint256) {
+        return s_addressToAmountFunded[funder];
+    }
+
+    function getPriceFeed() public view returns (AggregatorV3Interface) {
+        return s_priceFeed;
     }
 }
