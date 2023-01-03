@@ -2,6 +2,7 @@
   "name": "hardhat-fund-me",
   "author": "Kevin Chen",
   "version": "1.0.0",
+  "license": "MIT",
   "devDependencies": {
     "@chainlink/contracts": "^0.5.1",
     "@ethersproject/abi": "^5.4.7",
